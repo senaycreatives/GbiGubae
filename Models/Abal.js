@@ -27,6 +27,10 @@ const AbalSchema = new mongoose.Schema({
     ref: "Role",
     required: true,
   },
+  isCompleted: {
+    type: Boolean,
+    default: false,
+  },
   Date: {
     type: Date,
     default: Date.now,

@@ -4,6 +4,96 @@ const authMiddleware = require("../Middleware/AuthMiddleware");
 const router = express.Router();
 /**
  * @swagger
+ * /api/abal/transferGroupToAlmuni:
+ *   put:
+ *     summary: Transfer multiple members to alumni
+ *     description: Marks multiple members as completed, indicating they have been transferred to alumni.
+ *     tags:
+ *       - Members
+ *     security:
+ *       - bearerAuth: []  # Assuming you are using JWT for authentication
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               abalids:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Array of member IDs to be transferred to alumni.
+ *     responses:
+ *       200:
+ *         description: Successfully transferred members to alumni.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: No member IDs provided.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       404:
+ *         description: No members found for the provided IDs.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: An error occurred while transferring members.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ */
+router.put("/transferGroupToAlmuni", authMiddleware, async (req, res) => {
+  try {
+    const abalIds = req.body.abalids;
+
+    if (!Array.isArray(abalIds) || abalIds.length === 0) {
+      return res.status(400).json({ message: "No member IDs provided." });
+    }
+
+    const updatedMembers = await Abal.updateMany(
+      { _id: { $in: abalIds } },
+      { $set: { isCompleted: true } }
+    );
+
+    if (updatedMembers.nModified === 0) {
+      return res
+        .status(404)
+        .json({ message: "No members found for the provided IDs." });
+    }
+
+    res.status(200).json({
+      message: `${updatedMembers.nModified} member(s) transferred to alumni successfully.`,
+    });
+  } catch (error) {
+    console.error("Error transferring members:", error);
+    res
+      .status(500)
+      .json({ message: "An error occurred while transferring members." });
+  }
+});
+
+/**
+ * @swagger
  * /api/abal:
  *   post:
  *     summary: Create a new Abal
@@ -61,6 +151,17 @@ router.post("/", authMiddleware, async (req, res) => {
     res.status(201).json(savedAbal);
   } catch (error) {
     res.status(400).json({ error: error.message });
+  }
+});
+
+router.get("/all/Almuni", authMiddleware, async (req, res) => {
+  try {
+    const abals = await Abal.find({ isCompleted: true }).populate(
+      "gbigubae role"
+    );
+    res.status(200).json(abals);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 /**

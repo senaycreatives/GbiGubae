@@ -6,15 +6,57 @@ const authMiddleware = require("../Middleware/AuthMiddleware");
 const router = express.Router();
 const mongoose = require("mongoose");
 
-router.get("/Abal/:id", authMiddleware, async (req, res) => {
+/**
+ * @swagger
+ * /api/gbigubae/Abal/{id}:
+ *   get:
+ *     summary: Retrieve a single Gbigubae by ID
+ *     tags: [Gbigubae]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Gbigubae found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Gbigubae'
+ *       404:
+ *         description: Gbigubae not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+router.get("/Abal/:id", async (req, res) => {
   try {
-    const abals = await Abal.find({ gbigubae: req.params.id });
+    const abals = await Abal.find({
+      gbigubae: req.params.id,
+      isCompleted: false, // Filter to include only members whose isCompleted is false
+    });
     res.status(200).json(abals);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
-
 /**
  * @swagger
  * /api/gbigubae/withcount:
@@ -61,6 +103,7 @@ router.get("/withcount", authMiddleware, async (req, res) => {
         // Ensure _id is an ObjectId
         const abalCount = await Abal.countDocuments({
           gbigubae: new mongoose.Types.ObjectId(gbigubae._id),
+          isCompleted: false,
         });
         return { ...gbigubae.toObject(), abalCount };
       })
