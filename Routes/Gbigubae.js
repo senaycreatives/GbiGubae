@@ -51,7 +51,7 @@ router.get("/Abal/:id", async (req, res) => {
     const abals = await Abal.find({
       gbigubae: req.params.id,
       isCompleted: false, // Filter to include only members whose isCompleted is false
-    });
+    }).populate("gbigubae role");
     res.status(200).json(abals);
   } catch (error) {
     res.status(500).json({ error: error.message });
